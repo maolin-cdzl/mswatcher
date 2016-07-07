@@ -7,6 +7,8 @@ import signal
 import time
 import json
 
+from source import Source
+
 _options = None
 _sock_control = None
 _sock_data = None
@@ -66,12 +68,13 @@ def time_now():
 class Remote:
     def __init__(self,addr,**kwargs):
         self.ssrc = kwargs['ssrc']
-        self.period = kwargs['expect_period']
-        self.packet_size = kwargs['expect_size']
         self.control_address = addr
         self.data_address = None
+
+        self.period = kwargs['expect_period']
+        self.packet_size = kwargs['expect_size']
         self.tv_recv = time_now()
-        self.lsr = 0.0
+        self.source = Source()
 
     def onPeriod(self):
         pass
@@ -86,7 +89,11 @@ class Remote:
         pass
 
     def onPacket(self,packet):
-        pass
+        seq = packet.get('seq')
+        if seq is None:
+            return
+        self.tv_recv = time_now()
+        self.source.update_seq(seq)
 
 def PollControl():
     while True:
